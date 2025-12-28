@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Meu Portfólio Profissional</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --cor-principal: #2563eb;
+            --cor-secundaria: #1e40af;
+            --cor-destaque: #60a5fa;
+            --cor-texto: #1f2937;
+            --cor-texto-claro: #6b7280;
+            --cor-fundo: #f9fafb;
+            --cor-card: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--cor-texto);
+            background-color: var(--cor-fundo);
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--cor-principal) 0%, var(--cor-secundaria) 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-photo {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 5px solid white;
+            margin-bottom: 1rem;
+            object-fit: cover;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .contact-info {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .contact-info a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+
+        .contact-info a:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        /* Navegação */
+        nav {
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 1rem;
+        }
+
+        nav a {
+            color: var(--cor-texto);
+            text-decoration: none;
+            padding: 0.5rem 1.5rem;
+            transition: color 0.3s;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            color: var(--cor-principal);
+        }
+
+        /* Container Principal */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Seções */
+        section {
+            margin-bottom: 3rem;
+            background-color: var(--cor-card);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        section h2 {
+            color: var(--cor-principal);
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--cor-destaque);
+        }
+
+        /* Sobre Mim */
+        .about-content {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--cor-texto-claro);
+        }
+
+        /* Experiência e Educação */
+        .timeline-item {
+            margin-bottom: 2rem;
+            padding-left: 2rem;
+            border-left: 3px solid var(--cor-destaque);
+        }
+
+        .timeline-item h3 {
+            color: var(--cor-texto);
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-item .date {
+            color: var(--cor-principal);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-item .company {
+            color: var(--cor-texto-claro);
+            font-style: italic;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Habilidades */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .skill-category h3 {
+            color: var(--cor-principal);
+            margin-bottom: 0.8rem;
+            font-size: 1.2rem;
+        }
+
+        .skill-tag {
+            display: inline-block;
+            background-color: var(--cor-fundo);
+            color: var(--cor-texto);
+            padding: 0.4rem 1rem;
+            margin: 0.3rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            border: 1px solid var(--cor-destaque);
+        }
+
+        /* Certificados */
+        .certificates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .certificate-card {
+            border: 1px solid #e5e7eb;
+            padding: 1.5rem;
+            border-radius: 8px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            background-color: var(--cor-fundo);
+        }
+
+        .certificate-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .certificate-card h3 {
+            color: var(--cor-principal);
+            margin-bottom: 0.5rem;
+        }
+
+        .certificate-card .institution {
+            color: var(--cor-texto-claro);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .certificate-card .date {
+            color: var(--cor-texto-claro);
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-download {
+            display: inline-block;
+            background-color: var(--cor-principal);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+        }
+
+        .btn-download:hover {
+            background-color: var(--cor-secundaria);
+        }
+
+        /* Publicações */
+        .publication-item {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background-color: var(--cor-fundo);
+            border-radius: 8px;
+            border-left: 4px solid var(--cor-principal);
+        }
+
+        .publication-item h3 {
+            color: var(--cor-principal);
+            margin-bottom: 0.5rem;
+        }
+
+        .publication-item .metadata {
+            color: var(--cor-texto-claro);
+            font-size: 0.9rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .publication-item a {
+            color: var(--cor-principal);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .publication-item a:hover {
+            text-decoration: underline;
+        }
+
+        /* Galeria */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.05);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .gallery-item .caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            color: white;
+            padding: 1rem;
+            font-size: 0.9rem;
+        }
+
+        /* Interesses */
+        .interests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .interest-card {
+            text-align: center;
+            padding: 1.5rem;
+            background-color: var(--cor-fundo);
+            border-radius: 8px;
+            transition: transform 0.3s;
+        }
+
+        .interest-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .interest-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--cor-texto);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .skills-grid,
+            .certificates-grid,
+            .gallery-grid,
+            .interests-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- CABEÇALHO -->
+    <header>
+        <!-- ALTERE A IMAGEM: substitua o link abaixo pela URL da sua foto -->
+        <img src="https://via.placeholder.com/150" alt="Sua Foto" class="profile-photo">
+        
+        <!-- ALTERE SEU NOME -->
+        <h1>Seu Nome Completo</h1>
+        
+        <!-- ALTERE SUA PROFISSÃO -->
+        <p class="subtitle">Sua Profissão | Especialidade</p>
+        
+        <!-- ALTERE SEUS CONTATOS -->
+        <div class="contact-info">
+            <a href="mailto:seu.email@exemplo.com">✉️ seu.email@exemplo.com</a>
+            <a href="tel:+5534999999999">📱 (34) 99999-9999</a>
+            <a href="https://linkedin.com/in/seuperfil" target="_blank">🔗 LinkedIn</a>
+            <a>📍 Uberaba, MG</a>
+        </div>
+    </header>
+
+    <!-- MENU DE NAVEGAÇÃO -->
+    <nav>
+        <ul>
+            <li><a href="#sobre">Sobre Mim</a></li>
+            <li><a href="#experiencia">Experiência</a></li>
+            <li><a href="#educacao">Educação</a></li>
+            <li><a href="#habilidades">Habilidades</a></li>
+            <li><a href="#certificados">Certificados</a></li>
+            <li><a href="#publicacoes">Publicações</a></li>
+            <li><a href="#galeria">Galeria</a></li>
+            <li><a href="#interesses">Interesses</a></li>
+        </ul>
+    </nav>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <div class="container">
+        
+        <!-- SEÇÃO: SOBRE MIM -->
+        <section id="sobre">
+            <h2>Sobre Mim</h2>
+            <div class="about-content">
+                <p>
+                    <!-- ALTERE SUA APRESENTAÇÃO AQUI -->
+                    Escreva aqui uma breve apresentação sobre você, sua trajetória profissional, 
+                    suas paixões e o que te motiva. Conte sua história de forma autêntica e envolvente.
+                </p>
+                <p>
+                    Adicione mais parágrafos conforme necessário para transmitir sua experiência, 
+                    valores e objetivos profissionais.
+                </p>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: EXPERIÊNCIA PROFISSIONAL -->
+        <section id="experiencia">
+            <h2>Experiência Profissional</h2>
+            
+            <!-- EXPERIÊNCIA 1 -->
+            <div class="timeline-item">
+                <h3>Cargo / Posição</h3>
+                <p class="company">Nome da Empresa</p>
+                <p class="date">Mês/Ano - Atual (ou Mês/Ano)</p>
+                <p>
+                    Descreva suas principais responsabilidades, conquistas e projetos realizados nesta posição.
+                    Seja específico sobre resultados alcançados e impacto gerado.
+                </p>
+            </div>
+
+            <!-- EXPERIÊNCIA 2 -->
+            <div class="timeline-item">
+                <h3>Cargo / Posição Anterior</h3>
+                <p class="company">Nome da Empresa Anterior</p>
+                <p class="date">Mês/Ano - Mês/Ano</p>
+                <p>
+                    Descreva suas principais responsabilidades e conquistas nesta função.
+                </p>
+            </div>
+
+            <!-- ADICIONE MAIS EXPERIÊNCIAS COPIANDO O BLOCO ACIMA -->
+        </section>
+
+        <!-- SEÇÃO: EDUCAÇÃO -->
+        <section id="educacao">
+            <h2>Formação Acadêmica</h2>
+            
+            <!-- FORMAÇÃO 1 -->
+            <div class="timeline-item">
+                <h3>Título do Curso / Graduação</h3>
+                <p class="company">Nome da Instituição</p>
+                <p class="date">Ano de Início - Ano de Conclusão</p>
+                <p>
+                    Informações adicionais sobre sua formação, especializações, trabalhos relevantes, etc.
+                </p>
+            </div>
+
+            <!-- FORMAÇÃO 2 -->
+            <div class="timeline-item">
+                <h3>Outro Curso / Especialização</h3>
+                <p class="company">Nome da Instituição</p>
+                <p class="date">Ano de Início - Ano de Conclusão</p>
+                <p>
+                    Detalhes sobre esta formação.
+                </p>
+            </div>
+
+            <!-- ADICIONE MAIS FORMAÇÕES COPIANDO O BLOCO ACIMA -->
+        </section>
+
+        <!-- SEÇÃO: HABILIDADES -->
+        <section id="habilidades">
+            <h2>Habilidades</h2>
+            <div class="skills-grid">
+                
+                <!-- CATEGORIA 1 -->
+                <div class="skill-category">
+                    <h3>Habilidades Técnicas</h3>
+                    <span class="skill-tag">Habilidade 1</span>
+                    <span class="skill-tag">Habilidade 2</span>
+                    <span class="skill-tag">Habilidade 3</span>
+                    <span class="skill-tag">Habilidade 4</span>
+                </div>
+
+                <!-- CATEGORIA 2 -->
+                <div class="skill-category">
+                    <h3>Ferramentas</h3>
+                    <span class="skill-tag">Ferramenta 1</span>
+                    <span class="skill-tag">Ferramenta 2</span>
+                    <span class="skill-tag">Ferramenta 3</span>
+                    <span class="skill-tag">Ferramenta 4</span>
+                </div>
+
+                <!-- CATEGORIA 3 -->
+                <div class="skill-category">
+                    <h3>Idiomas</h3>
+                    <span class="skill-tag">Português - Nativo</span>
+                    <span class="skill-tag">Inglês - Avançado</span>
+                    <span class="skill-tag">Espanhol - Intermediário</span>
+                </div>
+
+                <!-- ADICIONE MAIS CATEGORIAS CONFORME NECESSÁRIO -->
+            </div>
+        </section>
+
+        <!-- SEÇÃO: CERTIFICADOS -->
+        <section id="certificados">
+            <h2>Certificados</h2>
+            <div class="certificates-grid">
+                
+                <!-- CERTIFICADO 1 -->
+                <div class="certificate-card">
+                    <h3>Nome do Certificado</h3>
+                    <p class="institution">Instituição Emissora</p>
+                    <p class="date">Data de Emissão: Mês/Ano</p>
+                    <!-- ALTERE O LINK DO PDF: faça upload do PDF no repositório e coloque o caminho aqui -->
+                    <a href="certificados/certificado1.pdf" class="btn-download" target="_blank">📄 Ver Certificado</a>
+                </div>
+
+                <!-- CERTIFICADO 2 -->
+                <div class="certificate-card">
+                    <h3>Outro Certificado</h3>
+                    <p class="institution">Outra Instituição</p>
+                    <p class="date">Data de Emissão: Mês/Ano</p>
+                    <a href="certificados/certificado2.pdf" class="btn-download" target="_blank">📄 Ver Certificado</a>
+                </div>
+
+                <!-- ADICIONE MAIS CERTIFICADOS COPIANDO O BLOCO ACIMA -->
+            </div>
+        </section>
+
+        <!-- SEÇÃO: PUBLICAÇÕES -->
+        <section id="publicacoes">
+            <h2>Publicações e Artigos</h2>
+            
+            <!-- PUBLICAÇÃO 1 -->
+            <div class="publication-item">
+                <h3>Título da Publicação ou Artigo</h3>
+                <p class="metadata">
+                    📅 Data de Publicação | 📰 Nome da Revista/Portal | 👥 Autores
+                </p>
+                <p>
+                    Breve resumo ou descrição do conteúdo da publicação. 
+                    Explique o tema abordado e sua relevância.
+                </p>
+                <a href="https://link-do-artigo.com" target="_blank">Ler artigo completo →</a>
+            </div>
+
+            <!-- PUBLICAÇÃO 2 -->
+            <div class="publication-item">
+                <h3>Outra Publicação</h3>
+                <p class="metadata">
+                    📅 Data de Publicação | 📰 Nome da Revista/Portal | 👥 Autores
+                </p>
+                <p>
+                    Descrição desta publicação.
+                </p>
+                <a href="https://link-do-artigo.com" target="_blank">Ler artigo completo →</a>
+            </div>
+
+            <!-- ADICIONE MAIS PUBLICAÇÕES COPIANDO O BLOCO ACIMA -->
+        </section>
+
+        <!-- SEÇÃO: GALERIA -->
+        <section id="galeria">
+            <h2>Galeria de Fotos</h2>
+            <div class="gallery-grid">
+                
+                <!-- FOTO 1 -->
+                <div class="gallery-item">
+                    <!-- ALTERE A IMAGEM: faça upload das fotos no repositório e coloque o caminho aqui -->
+                    <img src="https://via.placeholder.com/300x250" alt="Descrição da foto">
+                    <div class="caption">Legenda da foto - evento, local, etc.</div>
+                </div>
+
+                <!-- FOTO 2 -->
+                <div class="gallery-item">
+                    <img src="https://via.placeholder.com/300x250" alt="Descrição da foto">
+                    <div class="caption">Outra legenda descritiva</div>
+                </div>
+
+                <!-- FOTO 3 -->
+                <div class="gallery-item">
+                    <img src="https://via.placeholder.com/300x250" alt="Descrição da foto">
+                    <div class="caption">Mais uma legenda</div>
+                </div>
+
+                <!-- ADICIONE MAIS FOTOS COPIANDO O BLOCO ACIMA -->
+            </div>
+        </section>
+
+        <!-- SEÇÃO: INTERESSES -->
+        <section id="interesses">
+            <h2>Interesses</h2>
+            <div class="interests-grid">
+                
+                <!-- INTERESSE 1 -->
+                <div class="interest-card">
+                    <div class="interest-icon">🎯</div>
+                    <h3>Nome do Interesse</h3>
+                    <p>Breve descrição</p>
+                </div>
+
+                <!-- INTERESSE 2 -->
+                <div class="interest-card">
+                    <div class="interest-icon">📚</div>
+                    <h3>Outro Interesse</h3>
+                    <p>Breve descrição</p>
+                </div>
+
+                <!-- INTERESSE 3 -->
+                <div class="interest-card">
+                    <div class="interest-icon">🎨</div>
+                    <h3>Mais um Interesse</h3>
+                    <p>Breve descrição</p>
+                </div>
+
+                <!-- ADICIONE MAIS INTERESSES COPIANDO O BLOCO ACIMA -->
+            </div>
+        </section>
+
+    </div>
+
+    <!-- RODAPÉ -->
+    <footer>
+        <p>&copy; 2025 Seu Nome. Todos os direitos reservados.</p>
+        <p>Última atualização: Dezembro de 2025</p>
+    </footer>
+
+</body>
+</html>
