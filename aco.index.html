@@ -1,0 +1,640 @@
+import React, { useState, useEffect } from 'react';
+import { Download, Calculator, Settings } from 'lucide-react';
+
+const PlanilhaGalpao = () => {
+  // Estados para dados de entrada
+  const [dados, setDados] = useState({
+    // Localização
+    municipio: 'Barretos',
+    estado: 'SP',
+    v0: 40,
+    
+    // Dimensões
+    comprimento: 44,
+    largura: 25,
+    alturaParede: 7,
+    distanciaPilares: 8.8,
+    flexaoArco: 0.15,
+    
+    // Materiais
+    fyAco: 345,
+    espessuraTelha: 0.95,
+    ppTelha: 8.86,
+    
+    // Cargas
+    sobrecarga: 250,
+    
+    // Fatores
+    s1: 1.0,
+    s2: 0.93,
+    s3: 0.88,
+    cpeParede: -0.95,
+    cpeTelhado: -0.95,
+    cpi1: -0.30,
+    cpi2: 0.00,
+    
+    // Terças
+    distanciaEntreTermas: 2.5,
+    
+    // Coeficientes de ponderação
+    gammaG: 1.25,
+    gammaQ: 1.4,
+    psi0: 0.6,
+    gammaA1: 1.1
+  });
+
+  // Estados para resultados calculados
+  const [resultados, setResultados] = useState({});
+
+  // Função para calcular todos os resultados
+  useEffect(() => {
+    calcularResultados();
+  }, [dados]);
+
+  const calcularResultados = () => {
+    // 1. GEOMETRIA DO ARCO
+    const flecha = dados.largura * dados.flexaoArco;
+    const raio = (Math.pow(dados.largura, 2) + 4 * Math.pow(flecha, 2)) / (8 * flecha);
+    const anguloMeio = Math.asin(dados.largura / (2 * raio));
+    const compSemiArco = raio * anguloMeio;
+    const compTotalArco = 2 * compSemiArco;
+    
+    // 2. VELOCIDADE E PRESSÃO DO VENTO
+    const vk = dados.v0 * dados.s1 * dados.s2 * dados.s3;
+    const q = 0.613 * Math.pow(vk, 2);
+    
+    // 3. PRESSÕES NAS PAREDES
+    const pressaoParede1 = q * (dados.cpeParede - dados.cpi1);
+    const pressaoParede2 = q * (dados.cpeParede - dados.cpi2);
+    
+    // 4. PRESSÕES NO TELHADO
+    const pressaoTelhado1 = q * (dados.cpeTelhado - dados.cpi1);
+    const pressaoTelhado2 = q * (dados.cpeTelhado - dados.cpi2);
+    const pressaoCritica = Math.min(pressaoTelhado1, pressaoTelhado2);
+    
+    // 5. CARREGAMENTO DAS TELHAS
+    const ppTelhaNm2 = dados.ppTelha * 9.81;
+    const totalCompressao = ppTelhaNm2 + dados.sobrecarga;
+    
+    // Combinação ELU
+    const combPPSC = dados.gammaG * ppTelhaNm2 + dados.gammaQ * dados.sobrecarga;
+    const combPPVento = 1.0 * ppTelhaNm2 + dados.gammaQ * dados.psi0 * pressaoCritica;
+    const combCriticaTelha = Math.abs(Math.min(combPPSC, combPPVento));
+    
+    // Carga admissível telha (catálogo)
+    const cargaAdmTelha = 117; // kgf/m²
+    const verificacaoTelha = cargaAdmTelha > (combCriticaTelha / 9.81);
+    
+    // 6. DIMENSIONAMENTO DAS TERÇAS
+    const numTermas = Math.ceil(compTotalArco / dados.distanciaEntreTermas);
+    const vaoTerca = dados.distanciaPilares * 100; // em cm
+    
+    // Estimativa de perfil
+    const alturaEstimada = vaoTerca / 20;
+    const alturaAdotada = Math.ceil(alturaEstimada / 10) * 10;
+    
+    // Carregamentos
+    const ppTercaEstimado = 0.7; // kN/m
+    const ppTelhaLin = ppTelhaNm2 / 1000 * dados.distanciaEntreTermas;
+    const scLin = dados.sobrecarga / 1000 * dados.distanciaEntreTermas;
+    const ventoLin = pressaoCritica / 1000 * dados.distanciaEntreTermas;
+    
+    // Combinações
+    const combTerca1 = dados.gammaG * (ppTercaEstimado + ppTelhaLin) + dados.gammaQ * scLin;
+    const combTerca2 = 1.0 * (ppTercaEstimado + ppTelhaLin) + dados.gammaQ * ventoLin;
+    const qCriticoTerca = Math.max(Math.abs(combTerca1), Math.abs(combTerca2));
+    
+    // Momento fletor
+    const momentoTerca = (qCriticoTerca * Math.pow(dados.distanciaPilares, 2)) / 8;
+    
+    // Módulo resistente necessário
+    const fyKncm2 = dados.fyAco / 10;
+    const zxNecessario = (momentoTerca * 100) / (fyKncm2 / dados.gammaA1);
+    
+    // 7. DIMENSIONAMENTO DO ARCO
+    const numPorticos = Math.ceil(dados.comprimento / dados.distanciaPilares);
+    
+    // Cargas no arco (por metro de arco)
+    const ppTelhasArco = ppTelhaNm2 / 1000 * dados.distanciaPilares;
+    const ppTermasArco = (numTermas * ppTercaEstimado * 1000) / compTotalArco / 1000;
+    const ppArcoEstimado = 0.5; // kN/m
+    const ppTotalArco = ppTelhasArco + ppTermasArco + ppArcoEstimado;
+    
+    const scArco = dados.sobrecarga / 1000 * dados.distanciaPilares;
+    const ventoArco = pressaoCritica / 1000 * dados.distanciaPilares;
+    
+    // Combinação no arco
+    const combArco1 = dados.gammaG * ppTotalArco + dados.gammaQ * scArco;
+    const combArco2 = 1.0 * ppTotalArco + dados.gammaQ * dados.psi0 * scArco + dados.gammaQ * ventoArco;
+    const qCriticoArco = Math.max(combArco1, Math.abs(combArco2));
+    
+    // Empuxo horizontal
+    const empuxoH = (qCriticoArco * Math.pow(dados.largura, 2)) / (8 * flecha);
+    
+    // Reação vertical
+    const reacaoV = (qCriticoArco * dados.largura) / 2;
+    
+    // Esforço normal máximo
+    const esforcoNormalMax = Math.sqrt(Math.pow(empuxoH, 2) + Math.pow(reacaoV, 2));
+    
+    // 8. QUANTITATIVOS
+    const compTotalArcos = numPorticos * compTotalArco;
+    const pesoArcos = compTotalArcos * 95; // kg
+    
+    const numPilares = numPorticos * 2;
+    const compTotalPilares = numPilares * dados.alturaParede;
+    const pesoPilares = compTotalPilares * 60; // kg
+    
+    const numTermasTotal = numTermas * (numPorticos - 1);
+    const compTotalTermas = numTermasTotal * dados.distanciaPilares;
+    const pesoTermas = compTotalTermas * 70; // kg
+    
+    const pesoContraventamento = (pesoArcos + pesoPilares + pesoTermas) * 0.1;
+    const pesoTotalAco = pesoArcos + pesoPilares + pesoTermas + pesoContraventamento;
+    
+    const areaCobertura = dados.comprimento * compTotalArco;
+    const pesoTelhas = areaCobertura * dados.ppTelha;
+    
+    setResultados({
+      // Geometria
+      flecha,
+      raio,
+      anguloMeio: anguloMeio * 180 / Math.PI,
+      compSemiArco,
+      compTotalArco,
+      
+      // Vento
+      vk,
+      q,
+      pressaoParede1,
+      pressaoParede2,
+      pressaoTelhado1,
+      pressaoTelhado2,
+      pressaoCritica,
+      
+      // Telhas
+      ppTelhaNm2,
+      totalCompressao,
+      combPPSC,
+      combPPVento,
+      combCriticaTelha,
+      cargaAdmTelha,
+      verificacaoTelha,
+      
+      // Terças
+      numTermas,
+      vaoTerca,
+      alturaEstimada,
+      alturaAdotada,
+      ppTercaEstimado,
+      ppTelhaLin,
+      scLin,
+      ventoLin,
+      combTerca1,
+      combTerca2,
+      qCriticoTerca,
+      momentoTerca,
+      zxNecessario,
+      
+      // Arco
+      numPorticos,
+      ppTotalArco,
+      scArco,
+      ventoArco,
+      combArco1,
+      combArco2,
+      qCriticoArco,
+      empuxoH,
+      reacaoV,
+      esforcoNormalMax,
+      
+      // Quantitativos
+      compTotalArcos,
+      pesoArcos,
+      numPilares,
+      compTotalPilares,
+      pesoPilares,
+      numTermasTotal,
+      compTotalTermas,
+      pesoTermas,
+      pesoContraventamento,
+      pesoTotalAco,
+      areaCobertura,
+      pesoTelhas
+    });
+  };
+
+  const handleInputChange = (campo, valor) => {
+    setDados(prev => ({
+      ...prev,
+      [campo]: parseFloat(valor) || 0
+    }));
+  };
+
+  const exportarParaExcel = () => {
+    let csv = "MEMORIAL DE CÁLCULO - GALPÃO EM ARCO\n\n";
+    
+    csv += "DADOS DE ENTRADA\n";
+    csv += `Município,${dados.municipio}\n`;
+    csv += `Estado,${dados.estado}\n`;
+    csv += `Velocidade Básica V0,${dados.v0},m/s\n`;
+    csv += `Comprimento,${dados.comprimento},m\n`;
+    csv += `Largura,${dados.largura},m\n`;
+    csv += `Altura da Parede,${dados.alturaParede},m\n`;
+    csv += `Distância entre Pilares,${dados.distanciaPilares},m\n\n`;
+    
+    csv += "RESULTADOS - GEOMETRIA DO ARCO\n";
+    csv += `Flecha,${resultados.flecha?.toFixed(2)},m\n`;
+    csv += `Raio,${resultados.raio?.toFixed(2)},m\n`;
+    csv += `Ângulo Central,${resultados.anguloMeio?.toFixed(2)},graus\n`;
+    csv += `Comprimento Total do Arco,${resultados.compTotalArco?.toFixed(2)},m\n\n`;
+    
+    csv += "RESULTADOS - VENTO\n";
+    csv += `Velocidade Característica,${resultados.vk?.toFixed(2)},m/s\n`;
+    csv += `Pressão Dinâmica,${resultados.q?.toFixed(2)},N/m²\n`;
+    csv += `Pressão Crítica (Sucção),${resultados.pressaoCritica?.toFixed(2)},N/m²\n\n`;
+    
+    csv += "RESULTADOS - TELHAS\n";
+    csv += `Combinação Crítica,${resultados.combCriticaTelha?.toFixed(2)},N/m²\n`;
+    csv += `Carga Admissível,${resultados.cargaAdmTelha},kgf/m²\n`;
+    csv += `Verificação,${resultados.verificacaoTelha ? 'OK' : 'NÃO OK'}\n\n`;
+    
+    csv += "RESULTADOS - TERÇAS\n";
+    csv += `Número de Terças,${resultados.numTermas}\n`;
+    csv += `Momento Fletor,${resultados.momentoTerca?.toFixed(2)},kN.m\n`;
+    csv += `Módulo Resistente Necessário,${resultados.zxNecessario?.toFixed(2)},cm³\n\n`;
+    
+    csv += "RESULTADOS - ARCO\n";
+    csv += `Número de Pórticos,${resultados.numPorticos}\n`;
+    csv += `Empuxo Horizontal,${resultados.empuxoH?.toFixed(2)},kN\n`;
+    csv += `Esforço Normal Máximo,${resultados.esforcoNormalMax?.toFixed(2)},kN\n\n`;
+    
+    csv += "QUANTITATIVOS\n";
+    csv += `Peso Total de Aço,${(resultados.pesoTotalAco / 1000)?.toFixed(2)},toneladas\n`;
+    csv += `Área de Cobertura,${resultados.areaCobertura?.toFixed(2)},m²\n`;
+    csv += `Peso de Telhas,${(resultados.pesoTelhas / 1000)?.toFixed(2)},toneladas\n`;
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'memorial_calculo_galpao_arco.csv';
+    link.click();
+  };
+
+  return (
+    <div className="w-full h-screen overflow-auto bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
+                <Calculator className="text-blue-600" size={36} />
+                Dimensionamento de Galpão em Arco
+              </h1>
+              <p className="text-slate-600 mt-2">Calculadora Interativa - NBR 8800:2008 e NBR 6123</p>
+            </div>
+            <button
+              onClick={exportarParaExcel}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+            >
+              <Download size={20} />
+              Exportar CSV
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Coluna Esquerda - Inputs */}
+          <div className="space-y-6">
+            {/* Card de Localização */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <Settings size={24} className="text-blue-600" />
+                Dados de Localização
+              </h2>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Município
+                    </label>
+                    <input
+                      type="text"
+                      value={dados.municipio}
+                      onChange={(e) => setDados({...dados, municipio: e.target.value})}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Estado
+                    </label>
+                    <input
+                      type="text"
+                      value={dados.estado}
+                      onChange={(e) => setDados({...dados, estado: e.target.value})}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Velocidade Básica do Vento V₀ (m/s)
+                  </label>
+                  <input
+                    type="number"
+                    value={dados.v0}
+                    onChange={(e) => handleInputChange('v0', e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Card de Dimensões */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-bold text-slate-800 mb-4">Dimensões do Galpão</h2>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Comprimento (m)
+                    </label>
+                    <input
+                      type="number"
+                      value={dados.comprimento}
+                      onChange={(e) => handleInputChange('comprimento', e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Largura (m)
+                    </label>
+                    <input
+                      type="number"
+                      value={dados.largura}
+                      onChange={(e) => handleInputChange('largura', e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Altura Parede (m)
+                    </label>
+                    <input
+                      type="number"
+                      value={dados.alturaParede}
+                      onChange={(e) => handleInputChange('alturaParede', e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Dist. Pilares (m)
+                    </label>
+                    <input
+                      type="number"
+                      value={dados.distanciaPilares}
+                      onChange={(e) => handleInputChange('distanciaPilares', e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Flexão do Arco (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={dados.flexaoArco}
+                    onChange={(e) => handleInputChange('flexaoArco', e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Card de Cargas e Fatores */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-bold text-slate-800 mb-4">Cargas e Fatores</h2>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Sobrecarga (N/m²)
+                    </label>
+                    <input
+                      type="number"
+                      value={dados.sobrecarga}
+                      onChange={(e) => handleInputChange('sobrecarga', e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      PP Telha (kgf/m²)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={dados.ppTelha}
+                      onChange={(e) => handleInputChange('ppTelha', e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      S₂
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={dados.s2}
+                      onChange={(e) => handleInputChange('s2', e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      S₃
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={dados.s3}
+                      onChange={(e) => handleInputChange('s3', e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Cpe
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={dados.cpeTelhado}
+                      onChange={(e) => handleInputChange('cpeTelhado', e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Coluna Direita - Resultados */}
+          <div className="space-y-6">
+            {/* Card de Geometria do Arco */}
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-lg p-6 border-2 border-blue-200">
+              <h2 className="text-xl font-bold text-blue-900 mb-4">📐 Geometria do Arco</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Flecha (f):</span>
+                  <span className="text-lg font-bold text-blue-700">{resultados.flecha?.toFixed(2)} m</span>
+                </div>
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Raio (R):</span>
+                  <span className="text-lg font-bold text-blue-700">{resultados.raio?.toFixed(2)} m</span>
+                </div>
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Ângulo Central:</span>
+                  <span className="text-lg font-bold text-blue-700">{resultados.anguloMeio?.toFixed(2)}°</span>
+                </div>
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Comp. Arco:</span>
+                  <span className="text-lg font-bold text-blue-700">{resultados.compTotalArco?.toFixed(2)} m</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card de Vento */}
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg shadow-lg p-6 border-2 border-purple-200">
+              <h2 className="text-xl font-bold text-purple-900 mb-4">🌪️ Análise de Vento</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Vₖ:</span>
+                  <span className="text-lg font-bold text-purple-700">{resultados.vk?.toFixed(2)} m/s</span>
+                </div>
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Pressão q:</span>
+                  <span className="text-lg font-bold text-purple-700">{resultados.q?.toFixed(2)} N/m²</span>
+                </div>
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">P. Crítica (Sucção):</span>
+                  <span className="text-lg font-bold text-red-600">{resultados.pressaoCritica?.toFixed(2)} N/m²</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card de Telhas */}
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg shadow-lg p-6 border-2 border-green-200">
+              <h2 className="text-xl font-bold text-green-900 mb-4">🏠 Verificação das Telhas</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Carga Solicitante:</span>
+                  <span className="text-lg font-bold text-green-700">{(resultados.combCriticaTelha / 9.81)?.toFixed(2)} kgf/m²</span>
+                </div>
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Carga Admissível:</span>
+                  <span className="text-lg font-bold text-green-700">{resultados.cargaAdmTelha} kgf/m²</span>
+                </div>
+                <div className={`flex justify-between items-center rounded-lg p-3 ${resultados.verificacaoTelha ? 'bg-green-200 border-2 border-green-500' : 'bg-red-200 border-2 border-red-500'}`}>
+                  <span className="font-bold text-slate-800">Verificação:</span>
+                  <span className={`text-xl font-bold ${resultados.verificacaoTelha ? 'text-green-700' : 'text-red-700'}`}>
+                    {resultados.verificacaoTelha ? '✓ OK' : '✗ NÃO OK'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card de Terças */}
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg shadow-lg p-6 border-2 border-orange-200">
+              <h2 className="text-xl font-bold text-orange-900 mb-4">📏 Dimensionamento das Terças</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Nº de Terças:</span>
+                  <span className="text-lg font-bold text-orange-700">{resultados.numTermas}</span>
+                </div>
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Vão:</span>
+                  <span className="text-lg font-bold text-orange-700">{(resultados.vaoTerca / 100)?.toFixed(2)} m</span>
+                </div>
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Altura Adotada:</span>
+                  <span className="text-lg font-bold text-orange-700">{resultados.alturaAdotada} cm</span>
+                </div>
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Momento Fletor:</span>
+                  <span className="text-lg font-bold text-orange-700">{resultados.momentoTerca?.toFixed(2)} kN.m</span>
+                </div>
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Zₓ Necessário:</span>
+                  <span className="text-lg font-bold text-orange-700">{resultados.zxNecessario?.toFixed(0)} cm³</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card do Arco */}
+            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg shadow-lg p-6 border-2 border-indigo-200">
+              <h2 className="text-xl font-bold text-indigo-900 mb-4">🏗️ Esforços no Arco</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Nº de Pórticos:</span>
+                  <span className="text-lg font-bold text-indigo-700">{resultados.numPorticos}</span>
+                </div>
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Empuxo H:</span>
+                  <span className="text-lg font-bold text-indigo-700">{resultados.empuxoH?.toFixed(2)} kN</span>
+                </div>
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Reação V:</span>
+                  <span className="text-lg font-bold text-indigo-700">{resultados.reacaoV?.toFixed(2)} kN</span>
+                </div>
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">N máximo:</span>
+                  <span className="text-lg font-bold text-red-600">{resultados.esforcoNormalMax?.toFixed(2)} kN</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card de Quantitativos */}
+            <div className="bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg shadow-lg p-6 border-2 border-slate-500">
+              <h2 className="text-xl font-bold text-white mb-4">📊 Quantitativos Finais</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Peso Total Aço:</span>
+                  <span className="text-lg font-bold text-slate-800">{(resultados.pesoTotalAco / 1000)?.toFixed(2)} ton</span>
+                </div>
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Área Cobertura:</span>
+                  <span className="text-lg font-bold text-slate-800">{resultados.areaCobertura?.toFixed(2)} m²</span>
+                </div>
+                <div className="flex justify-between items-center bg-white rounded-lg p-3">
+                  <span className="font-semibold text-slate-700">Peso Telhas:</span>
+                  <span className="text-lg font-bold text-slate-800">{(resultados.pesoTelhas / 1000)?.toFixed(2)} ton</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="bg-white rounded-lg shadow-lg p-4 mt-6 text-center">
+          <p className="text-slate-600">
+            <strong>Normas:</strong> NBR 8800:2008 | NBR 6123:1988 | Desenvolvido para análise estrutural preliminar
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PlanilhaGalpao;
